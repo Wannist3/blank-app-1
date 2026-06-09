@@ -1,19 +1,28 @@
-# 🎈 Blank app template
+import streamlit as st
 
-A simple Streamlit app template for you to modify!
+# Titel der App
+st.title("Meine erste Streamlit-App 🚀")
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://blank-app-template.streamlit.app/)
+# Text-Eingabefeld
+name = st.text_input("Wie heißt du?", "Max Mustermann")
 
-### How to run it on your own machine
+# Schieberegler
+alter = st.slider("Wie alt bist du?", 0, 100, 25)
 
-1. Install the requirements
+# Checkbox
+happy = st.checkbox("Bist du glücklich?")
 
-   ```
-   $ pip install -r requirements.txt
-   ```
+# Button
+if st.button("Bestätigen"):
+    st.write(f"Hallo {name}! Du bist {alter} Jahre alt.")
+    if happy:
+        st.balloons()  # Feiere mit Ballons, wenn die Checkbox aktiviert ist
+    else:
+        st.warning("Schade, dass du nicht glücklich bist! 😢")
 
-2. Run the app
-
-   ```
-   $ streamlit run streamlit_app.py
-   ```
+# Anzeige der Daten (aktualisiert sich automatisch)
+st.write("---")
+st.write("**Aktuelle Daten:**")
+st.write(f"- Name: {name}")
+st.write(f"- Alter: {alter}")
+st.write(f"- Glücklich: {'Ja' if happy else 'Nein'}")
