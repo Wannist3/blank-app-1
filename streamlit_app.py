@@ -93,45 +93,68 @@ df_yearly_filtered = df_yearly[(df_yearly['Jahr'] >= year_range[0]) & (df_yearly
 st.subheader("Globale Temperatur-Anomalien (1850–heute)")
 
 if show_monthly:
+    df_filtered = df_filtered.sort_values(['Jahr', 'Monat']).copy()
+    df_filtered['Datum'] = pd.to_datetime(
+        dict(year=df_filtered['Jahr'], month=df_filtered['Monat'], day=1)
+    )
+    df_filtered['RollingMean'] = df_filtered['Temperatur-Anomalie (°C)'].rolling(12, min_periods=1).mean()
+    df_filtered['RollingStd'] = df_filtered['Temperatur-Anomalie (°C)'].rolling(12, min_periods=1).std()
+    df_filtered['UpperBand'] = df_filtered['RollingMean'] + 2 * df_filtered['RollingStd']
+    df_filtered['LowerBand'] = df_filtered['RollingMean'] - 2 * df_filtered['RollingStd']
+
     fig = px.line(
         df_filtered,
-        x='Jahr',
+        x='Datum',
         y='Temperatur-Anomalie (°C)',
         title="Monatliche Temperatur-Anomalien",
-        labels={'Temperatur-Anomalie (°C)': 'Anomalie (°C)'}
+        labels={'Temperatur-Anomalie (°C)': 'Anomalie (°C)', 'Datum': 'Datum'}
     )
-    std_values = df_filtered['Temperatur-Anomalie (°C)'].std()
-    mean_values = df_filtered['Temperatur-Anomalie (°C)'].mean()
-    x_values = df_filtered['Jahr']
+    fig.add_scatter(
+        x=df_filtered['Datum'],
+        y=df_filtered['UpperBand'],
+        mode='lines',
+        name='+2 Standardabweichungen',
+        line=dict(color='green', dash='dash')
+    )
+    fig.add_scatter(
+        x=df_filtered['Datum'],
+        y=df_filtered['LowerBand'],
+        mode='lines',
+        name='-2 Standardabweichungen',
+        fill='tonexty',
+        line=dict(color='green', dash='dash')
+    )
 else:
-    fig = px.line(
-        df_yearly_filtered,
-        x='Jahr',
-        y='Temperatur-Anomalie (°C)',
-        title="Jährliche Durchschnittstemperatur-Anomalien",
-        labels={'Temperatur-Anomalie (°C)': 'Anomalie (°C)'}
-    )
-    std_values = df_yearly_filtered['Temperatur-Anomalie (°C)'].std()
-    mean_values = df_yearly_filtered['Temperatur-Anomalie (°C)'].mean()
-    x_values = df_yearly_filtered['Jahr']
+    df_yearly_stats = df_filtered.groupby('Jahr')['Temperatur-Anomalie (°C)'].agg(
+        Mittelwert='mean',
+        Std='std'
+    ).reset_index()
+    df_yearly_stats['UpperBand'] = df_yearly_stats['Mittelwert'] + 2 * df_yearly_stats['Std']
+    df_yearly_stats['LowerBand'] = df_yearly_stats['Mittelwert'] - 2 * df_yearly_stats['Std']
 
-upper_band = [mean_values + 2 * std_values] * len(x_values)
-lower_band = [mean_values - 2 * std_values] * len(x_values)
-fig.add_scatter(
-    x=x_values,
-    y=upper_band,
-    mode='lines',
-    name='+2 Standardabweichungen',
-    line=dict(color='green', dash='dash')
-)
-fig.add_scatter(
-    x=x_values,
-    y=lower_band,
-    mode='lines',
-    name='-2 Standardabweichungen',
-    fill='tonexty',
-    line=dict(color='green', dash='dash')
-)
+    fig = px.line(
+        df_yearly_stats,
+        x='Jahr',
+        y='Mittelwert',
+        title="Jährliche Durchschnittstemperatur-Anomalien",
+        labels={'Mittelwert': 'Anomalie (°C)', 'Jahr': 'Jahr'}
+    )
+    fig.add_scatter(
+        x=df_yearly_stats['Jahr'],
+        y=df_yearly_stats['UpperBand'],
+        mode='lines',
+        name='+2 Standardabweichungen',
+        line=dict(color='green', dash='dash')
+    )
+    fig.add_scatter(
+        x=df_yearly_stats['Jahr'],
+        y=df_yearly_stats['LowerBand'],
+        mode='lines',
+        name='-2 Standardabweichungen',
+        fill='tonexty',
+        line=dict(color='green', dash='dash')
+    )
+
 
 # Gleitender Durchschnitt hinzufügen (falls aktiviert)
 if show_rolling_avg and not show_monthly:
