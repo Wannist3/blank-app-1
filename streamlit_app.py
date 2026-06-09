@@ -100,6 +100,9 @@ if show_monthly:
         title="Monatliche Temperatur-Anomalien",
         labels={'Temperatur-Anomalie (°C)': 'Anomalie (°C)'}
     )
+    std_values = df_filtered['Temperatur-Anomalie (°C)'].std()
+    mean_values = df_filtered['Temperatur-Anomalie (°C)'].mean()
+    x_values = df_filtered['Jahr']
 else:
     fig = px.line(
         df_yearly_filtered,
@@ -108,6 +111,27 @@ else:
         title="Jährliche Durchschnittstemperatur-Anomalien",
         labels={'Temperatur-Anomalie (°C)': 'Anomalie (°C)'}
     )
+    std_values = df_yearly_filtered['Temperatur-Anomalie (°C)'].std()
+    mean_values = df_yearly_filtered['Temperatur-Anomalie (°C)'].mean()
+    x_values = df_yearly_filtered['Jahr']
+
+upper_band = [mean_values + 2 * std_values] * len(x_values)
+lower_band = [mean_values - 2 * std_values] * len(x_values)
+fig.add_scatter(
+    x=x_values,
+    y=upper_band,
+    mode='lines',
+    name='+2 Standardabweichungen',
+    line=dict(color='green', dash='dash')
+)
+fig.add_scatter(
+    x=x_values,
+    y=lower_band,
+    mode='lines',
+    name='-2 Standardabweichungen',
+    fill='tonexty',
+    line=dict(color='green', dash='dash')
+)
 
 # Gleitender Durchschnitt hinzufügen (falls aktiviert)
 if show_rolling_avg and not show_monthly:
